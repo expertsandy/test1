@@ -21,7 +21,7 @@ stages:
         steps:
           - checkout: self
 
-          - task: NodeTool@1
+          - task: NodeTool@0
             inputs:
               versionSpec: '20.x'
             displayName: 'Use Node 20'

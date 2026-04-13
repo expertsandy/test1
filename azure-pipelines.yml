@@ -57,10 +57,18 @@ stages:
                   artifact: frontend-dist
                   displayName: 'Download build artifact'
 
+                - task: PowerShell@2
+                  displayName: 'Write publish profile to file'
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      $profile = '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+                      Set-Content -Path "$(Pipeline.Workspace)/publish.pubxml" -Value $profile
+
                 - task: AzureRmWebAppDeployment@4
                   displayName: 'Deploy to jaishanidev-app'
                   inputs:
                     ConnectionType: 'PublishProfile'
-                    PublishProfileContent: '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
+                    PublishProfilePath: '$(Pipeline.Workspace)/publish.pubxml'
                     appName: 'jaishanidev-app'
                     packageForZip: '$(Pipeline.Workspace)/frontend-dist'

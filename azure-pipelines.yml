@@ -10,7 +10,7 @@ pr:
       - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'local-agent'
 
 stages:
   - stage: CI

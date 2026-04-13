@@ -58,17 +58,25 @@ stages:
                   displayName: 'Download build artifact'
 
                 - task: PowerShell@2
-                  displayName: 'Write publish profile to file'
+                  displayName: 'Zip and deploy to Azure App Service'
                   inputs:
                     targetType: 'inline'
                     script: |
+                      $sourcePath = "$(Pipeline.Workspace)/frontend-dist"
+                      $zipPath = "$(Pipeline.Workspace)/deploy.zip"
+                      
+                      Compress-Archive -Path "$sourcePath/*" -DestinationPath $zipPath -Force
+                      
                       $profile = '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
-                      Set-Content -Path "$(Pipeline.Workspace)/publish.pubxml" -Value $profile
-
-                - task: AzureRmWebAppDeployment@4
-                  displayName: 'Deploy to jaishanidev-app'
-                  inputs:
-                    ConnectionType: 'PublishProfile'
-                    PublishProfilePath: '$(Pipeline.Workspace)/publish.pubxml'
-                    appName: 'jaishanidev-app'
-                    packageForZip: '$(Pipeline.Workspace)/frontend-dist'
+                      [xml]$xml = $profile
+                      $publishUrl = $xml.publishData.publishProfile[0].publishUrl
+                      $username = $xml.publishData.publishProfile[0].userName
+                      $password = $xml.publishData.publishProfile[0].userPWD
+                      
+                      $base64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${username}:${password}"))
+                      $headers = @{ Authorization = "Basic $base64" }
+                      
+                      $apiUrl = "https://$publishUrl/api/zipdeploy"
+                      Invoke-RestMethod -Uri $apiUrl -Method POST -Headers $headers -InFile $zipPath -ContentType "application/zip"
+                      
+                      Write-Host "Deployment complete!"

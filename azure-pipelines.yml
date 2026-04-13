@@ -36,6 +36,9 @@ stages:
 
           - script: npm run build
             displayName: 'Build (Vite)'
+            env:
+              VITE_SUPABASE_URL: $(VITE_SUPABASE_URL)
+              VITE_SUPABASE_ANON_KEY: $(VITE_SUPABASE_ANON_KEY)
 
           - publish: dist
             artifact: frontend-dist

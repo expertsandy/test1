@@ -1,0 +1,14 @@
+{
+  "name": "pr-review-bot",
+  "version": "1.0.0",
+  "main": "src/functions/prReview.js",
+  "scripts": {
+    "start": "func start",
+    "build": "echo done"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@google/generative-ai": "^0.21.0",
+    "@octokit/rest": "^20.0.0"
+  }
+}

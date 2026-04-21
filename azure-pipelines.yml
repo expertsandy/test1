@@ -67,19 +67,33 @@ stages:
                     script: |
                       $sourcePath = "$(Pipeline.Workspace)/frontend-dist"
                       $zipPath = "$(Pipeline.Workspace)/deploy.zip"
-                      
                       Compress-Archive -Path "$sourcePath/*" -DestinationPath $zipPath -Force
-                      
                       $profile = '$(AZURE_WEBAPP_PUBLISH_PROFILE)'
                       [xml]$xml = $profile
                       $publishUrl = $xml.publishData.publishProfile[0].publishUrl
                       $username = $xml.publishData.publishProfile[0].userName
                       $password = $xml.publishData.publishProfile[0].userPWD
-                      
                       $base64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${username}:${password}"))
                       $headers = @{ Authorization = "Basic $base64" }
-                      
                       $apiUrl = "https://$publishUrl/api/zipdeploy"
                       Invoke-RestMethod -Uri $apiUrl -Method POST -Headers $headers -InFile $zipPath -ContentType "application/zip"
-                      
                       Write-Host "Deployment complete!"
+
+  - stage: AIAgents
+    displayName: 'AI Agent Analysis'
+    dependsOn: CI
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - job: RunAgents
+        displayName: 'Run Multi-Agent Crew'
+        steps:
+          - checkout: self
+
+          - script: pip install requests
+            displayName: 'Install dependencies'
+
+          - script: python agents/crew.py
+            displayName: 'Run AI Agent Crew'
+            env:
+              GEMINI_API_KEY: $(GEMINI_API_KEY)
+              GITHUB_TOKEN: $(GITHUB_TOKEN)

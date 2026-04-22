@@ -9,11 +9,11 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REPO = os.environ.get("BUILD_REPOSITORY_NAME", "expertsandy/test1")
 PR_NUMBER = os.environ.get("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
 
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={GEMINI_API_KEY}"
 
 import time
 
-def call_gemini(prompt, retries=3):
+def call_gemini(prompt, retries=5):
     for attempt in range(retries):
         response = requests.post(GEMINI_URL, json={
             "contents": [{"parts": [{"text": prompt}]}]
@@ -22,12 +22,12 @@ def call_gemini(prompt, retries=3):
         if response.ok:
             return data["candidates"][0]["content"]["parts"][0]["text"]
         if response.status_code == 503:
-            wait = (attempt + 1) * 10
+            wait = (attempt + 1) * 20
             print(f"Gemini 503 - retrying in {wait}s (attempt {attempt+1}/{retries})")
             time.sleep(wait)
         else:
             raise Exception(f"Gemini error: {data}")
-    raise Exception("Gemini unavailable after 3 retries")
+    raise Exception("Gemini unavailable after 5 retries")
 
 
 def get_pr_diff():

@@ -11,18 +11,31 @@ PR_NUMBER = os.environ.get("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
+import time
 
-def call_gemini(prompt):
-    response = requests.post(GEMINI_URL, json={
-        "contents": [{"parts": [{"text": prompt}]}]
-    })
-    data = response.json()
-    if not response.ok:
-        raise Exception(f"Gemini error: {data}")
-    return data["candidates"][0]["content"]["parts"][0]["text"]
+def call_gemini(prompt, retries=5):
+    for attempt in range(retries):
+        response = requests.post(GEMINI_URL, json={
+            "contents": [{"parts": [{"text": prompt}]}]
+        })
+        data = response.json()
+        if response.ok:
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        code = response.status_code
+        if code in [503, 429]:
+            wait = (attempt + 1) * 30
+            print(f"Gemini {code} - retrying in {wait}s (attempt {attempt+1}/{retries})")
+            time.sleep(wait)
+        else:
+            raise Exception(f"Gemini error: {data}")
+    raise Exception("Gemini unavailable after 5 retries")
 
 
 def get_pr_diff():
+    print(f"PR_NUMBER: {PR_NUMBER}")
+    print(f"REPO: {REPO}")
+    print(f"Token present: {bool(GITHUB_TOKEN)}")
+    print(f"Token length: {len(GITHUB_TOKEN) if GITHUB_TOKEN else 0}")
     if not PR_NUMBER:
         print("No PR number found - skipping analysis")
         return None

@@ -30,29 +30,37 @@ app.http('prReview', {
     try {
       const body = await request.text();
       const signature = request.headers.get('x-hub-signature-256');
+
       if (!signature || !verifySignature(body, signature)) {
         return { status: 401, body: 'Invalid signature' };
       }
+
       const event = request.headers.get('x-github-event');
       if (event !== 'pull_request') {
         return { status: 200, body: 'Not a PR event, skipping' };
       }
+
       const payload = JSON.parse(body);
       if (!['opened', 'synchronize'].includes(payload.action)) {
         return { status: 200, body: `Action '${payload.action}' ignored` };
       }
+
       const owner = payload.repository.owner.login;
       const repo = payload.repository.name;
       const pullNumber = payload.pull_request.number;
       const prTitle = payload.pull_request.title;
       const prBody = payload.pull_request.body || 'No description';
+
       context.log(`Reviewing PR #${pullNumber}: ${prTitle}`);
+
       const { data: files } = await octokit.pulls.listFiles({
         owner, repo, pull_number: pullNumber
       });
+
       const diffSummary = files.slice(0, 10).map(f =>
         `File: ${f.filename} (+${f.additions} -${f.deletions})\n${(f.patch || '').slice(0, 1500)}`
       ).join('\n\n---\n\n');
+
       const prompt = `You are an expert code reviewer. Review this pull request.
 
 PR Title: ${prTitle}
@@ -68,5 +76,18 @@ Provide a structured review with:
 5. **Verdict** - APPROVE / REQUEST_CHANGES / COMMENT`;
 
       const review = await callGemini(prompt);
-      const comment = `## 🤖 AI Code Review\n\n${review}\n\n---\n*Reviewed by Gemini 2.5 Flash via JaiShanidev PR Bot*`;
-      await octokit.issues.createComm
+      const comment = `## AI Code Review\n\n${review}\n\n---\n*Reviewed by Gemini 2.5 Flash via JaiShanidev PR Bot*`;
+
+      await octokit.issues.createComment({
+        owner, repo, issue_number: pullNumber, body: comment
+      });
+
+      context.log(`Review posted on PR #${pullNumber}`);
+      return { status: 200, body: 'Review posted successfully' };
+
+    } catch (error) {
+      context.error(error);
+      return { status: 500, body: `Error: ${error.message}` };
+    }
+  }
+});

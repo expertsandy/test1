@@ -82,7 +82,7 @@ stages:
   - stage: AIAgents
     displayName: 'AI Agent Analysis'
     dependsOn: CI
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - job: RunAgents
         displayName: 'Run Multi-Agent Crew'

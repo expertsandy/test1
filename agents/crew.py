@@ -23,6 +23,10 @@ def call_gemini(prompt):
 
 
 def get_pr_diff():
+    print(f"PR_NUMBER: {PR_NUMBER}")
+    print(f"REPO: {REPO}")
+    print(f"Token present: {bool(GITHUB_TOKEN)}")
+    print(f"Token length: {len(GITHUB_TOKEN) if GITHUB_TOKEN else 0}")
     if not PR_NUMBER:
         print("No PR number found - skipping analysis")
         return None

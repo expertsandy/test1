@@ -9,9 +9,7 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REPO = os.environ.get("BUILD_REPOSITORY_NAME", "expertsandy/test1")
 PR_NUMBER = os.environ.get("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
 
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={GEMINI_API_KEY}"
-
-import time
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 def call_gemini(prompt, retries=5):
     for attempt in range(retries):
@@ -21,9 +19,10 @@ def call_gemini(prompt, retries=5):
         data = response.json()
         if response.ok:
             return data["candidates"][0]["content"]["parts"][0]["text"]
-        if response.status_code == 503:
-            wait = (attempt + 1) * 20
-            print(f"Gemini 503 - retrying in {wait}s (attempt {attempt+1}/{retries})")
+        code = response.status_code
+        if code in [503, 429]:
+            wait = (attempt + 1) * 30
+            print(f"Gemini {code} - retrying in {wait}s (attempt {attempt+1}/{retries})")
             time.sleep(wait)
         else:
             raise Exception(f"Gemini error: {data}")

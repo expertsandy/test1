@@ -11,6 +11,8 @@ PR_NUMBER = os.environ.get("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
+import time
+
 def call_gemini(prompt, retries=5):
     for attempt in range(retries):
         response = requests.post(GEMINI_URL, json={

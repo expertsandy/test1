@@ -5,3 +5,4 @@ test
 test
 test wiki
 trigger
+wiki fix

@@ -4,3 +4,4 @@
 test
 test
 test wiki
+trigger

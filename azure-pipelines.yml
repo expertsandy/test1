@@ -97,3 +97,16 @@ stages:
             env:
               GEMINI_API_KEY: $(GEMINI_API_KEY)
               GITHUB_TOKEN: $(GITHUB_TOKEN)
+
+          - script: python agents/boards_agent.py
+            displayName: 'Run Boards Agent'
+            env:
+              GEMINI_API_KEY: $(GEMINI_API_KEY)
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+              ADO_PAT: $(ADO_PAT)
+
+          - script: python agents/sprint_agent.py
+            displayName: 'Run Sprint Planning Agent'
+            env:
+              GEMINI_API_KEY: $(GEMINI_API_KEY)
+              ADO_PAT: $(ADO_PAT)

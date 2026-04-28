@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import requests
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -11,9 +12,8 @@ PR_NUMBER = os.environ.get("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
 
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
-import time
 
-def call_gemini(prompt, retries=5):
+def call_gemini(prompt, retries=2):
     for attempt in range(retries):
         response = requests.post(GEMINI_URL, json={
             "contents": [{"parts": [{"text": prompt}]}]
@@ -23,12 +23,12 @@ def call_gemini(prompt, retries=5):
             return data["candidates"][0]["content"]["parts"][0]["text"]
         code = response.status_code
         if code in [503, 429]:
-            wait = (attempt + 1) * 30
+            wait = 15
             print(f"Gemini {code} - retrying in {wait}s (attempt {attempt+1}/{retries})")
             time.sleep(wait)
         else:
             raise Exception(f"Gemini error: {data}")
-    raise Exception("Gemini unavailable after 5 retries")
+    return "Gemini temporarily unavailable - please retry later."
 
 
 def get_pr_diff():
